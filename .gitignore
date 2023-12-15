@@ -1,0 +1,4 @@
+dist/
+build/
+seapeapea.egg-info/
+.vscode/
