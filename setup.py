@@ -18,6 +18,7 @@ setup(
     url = 'https://github.com/mugiseyebrows/seapeapea',
     description = 'с++ to python transpiler',
     long_description = long_description,
+    long_description_content_type = 'text/markdown',
     install_requires = ['lark'],
     include_package_data = True,
     package_data = {
