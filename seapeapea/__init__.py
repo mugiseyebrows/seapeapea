@@ -1517,14 +1517,14 @@ with open(path, encoding='utf-8') as f:
     GRAMMAR = f.read()
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("src", nargs="+")
+    parser = argparse.ArgumentParser(prog='seapeapea', description='transpiles c++ into python')
+    parser.add_argument("src", nargs="+", help="cpp files")
     parser.add_argument("-I", "--include", action='append', help="includepath")
     parser.add_argument("-o", "--output", help="output")
     parser.add_argument("-p", "--preprocessed", help="path to save preprocessed")
     parser.add_argument("-m", "--map", help="save map for side by side")
     parser.add_argument("--no-imports", action="store_true", help="do not add imports")
-    parser.add_argument("--qt", choices=['pyqt5', 'pyside2'])
+    parser.add_argument("--qt", choices=['pyqt5', 'pyside2'], help="python qt library")
     parser.add_argument("--time", action="store_true", help='print time stat')
 
     args = parser.parse_args()
