@@ -4,7 +4,7 @@ C++ to python transpiler
 
 ```
 usage: seapeapea [-h] [-I INCLUDE] [-o OUTPUT] [-p PREPROCESSED] [-m MAP]
-                 [--no-imports] [--qt {pyqt5,pyside2}] [--time]
+                 [--no-imports] [--qt {pyside6,pyqt6,pyside2,pyqt5}] [--time]
                  src [src ...]
 
 transpiles c++ into python
@@ -22,7 +22,8 @@ options:
                         path to save preprocessed
   -m MAP, --map MAP     save map for side by side
   --no-imports          do not add imports
-  --qt {pyqt5,pyside2}  python qt library
+  --qt {pyside6,pyqt6,pyside2,pyqt5}
+                        python qt library
   --time                print time stat
 ```
 

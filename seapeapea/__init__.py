@@ -44,7 +44,23 @@ class Signal:
     args: list[DeclArg]
     rendered: str
 
-from PyQt5 import QtWidgets, QtCore, QtGui, QtPrintSupport, QtSql
+try:
+    from PySide6 import QtWidgets, QtCore, QtGui, QtPrintSupport, QtSql
+except ImportError:
+    try:
+        from PyQt6 import QtWidgets, QtCore, QtGui, QtPrintSupport, QtSql
+    except ImportError:
+        try:
+            from PySide2 import QtWidgets, QtCore, QtGui, QtPrintSupport, QtSql
+        except ImportError:
+            try:
+                from PyQt5 import QtWidgets, QtCore, QtGui, QtPrintSupport, QtSql
+            except ImportError:
+                QtWidgets = None
+                QtCore = None
+                QtGui = None
+                QtPrintSupport = None
+                QtSql = None
 
 class ExampleFinder:
     def __init__(self, base):
@@ -87,6 +103,15 @@ def get_last_token(child):
         return child
     return get_last_token(child.children[-1])
 
+def import_chain(chain):
+    def expr(head, tail):
+        if len(tail) == 0:
+            return "\n".join(head)
+        head_ = tail[0]
+        tail_ = tail[1:]
+        return "try:\n" + indent("\n".join(head)) + "\nexcept ImportError:\n" + indent(expr(head_, tail_))
+    return expr(chain[0], chain[1:])
+
 class Ctx:
 
     QtWidgets = dir(QtWidgets)
@@ -119,6 +144,13 @@ class Ctx:
         self._itertools = False
         self._import_signal = False
         self._static_fn = False
+        self._need_sys = False
+
+    def set_need_sys(self, value = True):
+        self._need_sys = value
+
+    def need_sys(self):
+        return self._need_sys
 
     def add_map(self, child, res: str):
         first_token = get_first_token(child)
@@ -140,14 +172,19 @@ class Ctx:
 
         if name in self.QtWidgets:
             self._imports["QtWidgets"].add(name)
+            return
         if name in self.QtCore:
             self._imports["QtCore"].add(name)
+            return
         if name in self.QtGui:
             self._imports["QtGui"].add(name)
+            return
         if name in self.QtPrintSupport:
             self._imports["QtPrintSupport"].add(name)
+            return
         if name in self.QtSql:
             self._imports["QtSql"].add(name)
+            return
 
     """
     def add_member(self, name):
@@ -159,6 +196,8 @@ class Ctx:
         if self._itertools:
             res.append('import itertools')
 
+        pyside6 = []
+        pyqt6 = []
         pyside2 = []
         pyqt5 = []
 
@@ -166,26 +205,46 @@ class Ctx:
             values = list(values)
             values.sort()
             if len(values) > 0:
-                pyqt5.append("from PyQt5.{} import {}".format(k, ", ".join(values)))
+                pyside6.append("from PySide6.{} import {}".format(k, ", ".join(values)))
                 pyside2.append("from PySide2.{} import {}".format(k, ", ".join(values)))
+                pyqt5.append("from PyQt5.{} import {}".format(k, ", ".join(values)))
+                pyqt6.append("from PyQt6.{} import {}".format(k, ", ".join(values)))
         if self._import_signal:
-            pyqt5.append("from PyQt5.{} import {}".format("QtCore", "pyqtSignal as Signal"))
+            pyside6.append("from PySide6.{} import {}".format("QtCore", "Signal"))
             pyside2.append("from PySide2.{} import {}".format("QtCore", "Signal"))
+            pyqt6.append("from PyQt6.{} import {}".format("QtCore", "pyqtSignal as Signal"))
+            pyqt5.append("from PyQt5.{} import {}".format("QtCore", "pyqtSignal as Signal"))
+            
+        imports = []
+        if self.need_sys():
+            imports.append("import sys")    
 
-        imports = ["import sys"]
-
-        if len(pyside2) == 0 and len(pyqt5) == 0:
-            return ''
         if dialect == 'pyqt5':
-            return "\n".join(pyqt5) + '\n'
+            chain = [pyqt5]
         elif dialect == "pyside2":
-            return "\n".join(pyside2) + '\n'
+            chain = [pyside2]
+        elif dialect == "pyqt6":
+            chain = [pyqt6]
+        elif dialect == "pyside6":
+            chain = [pyside6]
+        else:
+            chain = [pyside6, pyqt6, pyside2, pyqt5]
 
-        return "{}\ntry:\n{}\nexcept ImportError:\n{}\n\n".format(
-            "\n".join(imports),
-            indent("\n".join(pyside2)),
-            indent("\n".join(pyqt5)),
-        )
+        if len(pyside6) > 0:
+            qt_imports = import_chain(chain) + "\n"
+        else:
+            qt_imports = ''
+
+        if len(imports) > 0:
+            nonqt_imports = "\n".join(imports) + "\n"
+        else:
+            nonqt_imports = ''
+
+        all_imports = nonqt_imports + qt_imports
+        if all_imports != '':
+            all_imports += '\n'
+
+        return all_imports
 
     def begin_fn(self, decl):
         name = parse_qname(find_first(decl, 'qname'), self)
@@ -1053,6 +1112,7 @@ def parse_stat_stack(stat_stack, ctx: Ctx):
 
     if type in ['QApplication', 'QGuiApplication']:
         args = ['sys.argv']
+        ctx.set_need_sys()
 
     name = ".".join(names[0])
 
@@ -1524,7 +1584,7 @@ def main():
     parser.add_argument("-p", "--preprocessed", help="path to save preprocessed")
     parser.add_argument("-m", "--map", help="save map for side by side")
     parser.add_argument("--no-imports", action="store_true", help="do not add imports")
-    parser.add_argument("--qt", choices=['pyqt5', 'pyside2'], help="python qt library")
+    parser.add_argument("--qt", choices=['pyside6', 'pyqt6', 'pyside2', 'pyqt5'], help="python qt library")
     parser.add_argument("--time", action="store_true", help='print time stat')
 
     args = parser.parse_args()
