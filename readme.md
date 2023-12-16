@@ -38,6 +38,6 @@ There are two ways to write c++ transpiler:
 
 1) Hard way: write c++ compiler and preprocessor that can expand all macros and process all templates, it will produce semireadable code that is almost guaranteed to be correct.
 
-2) Easy way: write processor that parses code and makes reasonable assumptions about missing information and produces readable code (as if it way written by human) that is probably correct.
+2) Easy way: write processor that parses code and makes reasonable assumptions about missing information and produces readable code that is probably correct.
 
 Seapeapea goes the easy way, it produces first iteration of what will become working code after you repair it.
