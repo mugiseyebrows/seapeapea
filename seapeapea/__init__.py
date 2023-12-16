@@ -677,7 +677,7 @@ def parse_expr_call(expr_call, ctx: Ctx):
             signal = signal.split(".")[-1]
             slot = slot.split(".")[-1]
             if ctx.has_member(emitter):
-                emitter = "self." + emitter
+                emitter = ctx.cls_or_self() + "." + emitter
             res = "{}.{}.connect({}.{})".format(emitter, signal, receiver, slot)
 
             return res
@@ -825,7 +825,7 @@ def parse_expr_name(expr_name, ctx: Ctx):
         'in': 'in_'
     }.get(value, value)
     if ctx.has_member(value):
-        value = "self." + value
+        value = ctx.cls_or_self() + "." + value
     return value
 
 def parse_expr_overload(expr_overload, ctx: Ctx):
@@ -869,7 +869,7 @@ def parse_expr_sub(expr_sub, ctx):
 def parse_expr_nref(expr_nref, ctx: Ctx):
     name = find_token(expr_nref, 'NAME')
     if ctx.has_member(name):
-        return "self." + name
+        return ctx.cls_or_self() + "." + name
     return name
 
 def parse_expr_tern(expr_tern, ctx):
