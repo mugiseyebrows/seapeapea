@@ -40,4 +40,4 @@ There are two ways to write c++ transpiler:
 
 2) Easy way: write processor that parses code and makes reasonable assumptions about missing information and produces readable code (as if it way written by human) that is probably correct.
 
-Seapeapea goes easy way, it produces first iteration of what will become working code after you repair it.
+Seapeapea goes the easy way, it produces first iteration of what will become working code after you repair it.
